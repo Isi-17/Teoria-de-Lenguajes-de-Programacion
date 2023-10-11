@@ -1,7 +1,7 @@
 
 module Binario  where
 -- Binary Numerals
--- N : Num → Z is defined by the semantic clauses or equations:
+-- N : Num -> Z is defined by the semantic clauses or equations:
 -- N [[0]] = 0
 -- N [[1]] = 1
 -- N [[n 0]] = 2 · N [[n]]
@@ -26,3 +26,15 @@ evalBin (SO b) = 2 * evalBin b
 evalBin (SI b) = 2 * evalBin b + 1
 
 --evalBin b0 = 11
+
+
+-- N : Num -> Z is defined by the semantic clauses or equations:
+-- N [[0]] = 0
+-- N [[1]] = 1
+-- N [[0 n]] = N [[n]]    -- los 0 a la izquierda no tienen valor
+-- N [[1 n]] =            -- no se puede constuir el significado a partir de los componentes
+-- Esto ocurre por la sintaxis.
+
+-- Si n es un numero binario que empieza por 1, entonces 
+
+
