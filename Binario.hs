@@ -32,7 +32,7 @@ evalBin (SI b) = 2 * evalBin b + 1
 -- N [[0]] = 0
 -- N [[1]] = 1
 -- N [[0 n]] = N [[n]]    -- los 0 a la izquierda no tienen valor
--- N [[1 n]] =            -- no se puede constuir el significado a partir de los componentes
+-- N [[1 n]] =            -- no se puede construir el significado a partir de los componentes
 -- Esto ocurre por la sintaxis.
 
 -- Si n es un numero binario que empieza por 1, entonces 
