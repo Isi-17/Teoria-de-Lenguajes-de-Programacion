@@ -4,11 +4,15 @@
 -- La cateogría de x vendría definida por Var
 module Aexp where
 
+type Var = String
+type Z = Integer
+type State = Var -> Z   -- no choca 'Var' porque depende del contexto
+
 data Aexp = Lit String   -- Mejor que poner Num String, pues Num ya se utiliza
-        |   Var String
+        |   VarId Var         -- hemos puesto 'Var' en lugar de 'String' para que se entienda mejor
         |   Add Aexp Aexp   -- la suma usa dos expresiones tipo Aexp
         |   Prod Aexp Aexp  -- el producto usa dos expresiones tipo Aexp
-        |   Sub Aexp Aexp   -- la resta usa dos expresiones tipo Aexp
+        |   Sub Aexp Aexp   -- la resta usa dos expresiones tipo Aexp0
         deriving Show
 
 -- exp0 = (x + 3) * (y - 5)
@@ -16,5 +20,35 @@ data Aexp = Lit String   -- Mejor que poner Num String, pues Num ya se utiliza
 --         +        -
 --      x    3    y   5
 exp0 :: Aexp
-exp0 = Prod (Add (Var "x") (Lit "3")) (Sub (Var "y") (Lit "5"))   -- los parentesis son de la sintaxis de Haskell, no de la sintaxis abstracta creada
+exp0 = Prod (Add (VarId "x") (Lit "3")) (Sub (VarId "y") (Lit "5"))   -- los parentesis son de la sintaxis de Haskell, no de la sintaxis abstracta creada
 
+-- A : Aexp -> State -> Z
+-- A[n] = N[n]
+-- A[x]s = sx
+-- A[a1 + a2] = A[a1]s + A[a2]s
+-- A[a1 * a2] = A[a1]s * A[a2]s
+-- A[a1 - a2] = A[a1]s - A[a2]s
+
+evalAexp :: Aexp -> State -> Z
+evalAexp (Lit n) s = read n     -- read es una función de Haskell que convierte un String en un Integer
+evalAexp (VarId x) s = s x
+evalAexp (Add a1 a2) s = evalAexp a1 s + evalAexp a2 s
+evalAexp (Prod a1 a2) s = evalAexp a1 s * evalAexp a2 s
+evalAexp (Sub a1 a2) s = evalAexp a1 s - evalAexp a2 s
+
+
+-- read "3" :: Int  -- esto es lo que hace la función read, devuelve un Integer '3'
+
+-- Vamos a definir estados
+s0 :: State
+s0 "x" = 2
+s0 "y" = 7
+s0 "z" = 15
+s0 "media" = 45
+s0 _ = 0                -- para que la funcion sea total
+
+-- evalAexp exp0 s0    devuelve 10
+
+-- x := 5
+-- y := x++
+-- Se tiene que x = 6, y = 5
