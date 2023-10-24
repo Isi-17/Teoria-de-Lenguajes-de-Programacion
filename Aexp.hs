@@ -13,7 +13,8 @@ data Aexp = Lit String   -- Mejor que poner Num String, pues Num ya se utiliza
         |   Add Aexp Aexp   -- la suma usa dos expresiones tipo Aexp
         |   Prod Aexp Aexp  -- el producto usa dos expresiones tipo Aexp
         |   Sub Aexp Aexp   -- la resta usa dos expresiones tipo Aexp0
-        deriving Show
+          deriving Show
+        --deriving (Show, Eq)
 
 -- exp0 = (x + 3) * (y - 5)
 --              *
@@ -52,3 +53,22 @@ s0 _ = 0                -- para que la funcion sea total
 -- x := 5
 -- y := x++
 -- Se tiene que x = 6, y = 5
+
+type T = Bool
+
+data  Bexp  =  TRUE 
+            |  FALSE 
+            |  Eq Aexp Aexp 
+            |  Le Aexp Aexp 
+            |  Neg Bexp 
+            |  And Bexp Bexp 
+              deriving Show
+            --deriving (Show, Eq) 
+
+evalBexp :: Bexp -> State -> T
+evalBexp TRUE _  = True
+evalBexp FALSE _ = False
+evalBexp (Eq a1 a2) s  =  evalAexp a1 s == evalAexp a2 s
+evalBexp (Le a1 a2) s  =  evalAexp a1 s <= evalAexp a2 s 
+evalBexp (Neg b) s  =  not(evalBexp b s)
+evalBexp (And b1 b2) s  =  evalBexp b1 s && evalBexp b2 s
