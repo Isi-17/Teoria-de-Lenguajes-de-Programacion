@@ -65,18 +65,17 @@ testBinVal = test ["value of zero"  ~: 0 ~=? binVal zero,
 
 -- | Define a function 'foldBin' to fold a value of type 'Bin'
 
-foldBin :: (b -> Bit -> b) -> (Bit -> b) -> Bin -> b
-foldBin f solBase (MSB bit) = solBase bit
-foldBin f solBase (B bin bit) = recfoldBin bin
+foldBin :: (Bit->b->b) -> b -> Bin -> b
+foldBin f solBase x = recfoldBin x
     where 
-      recfoldBin (MSB bit) = solBase bit
-      recfoldBin (B bin bit) = f (recfoldBin bin) bit
+      recfoldBin (MSB bit) = f bit solBase
+      recfoldBin (B bin bit) = f bit (recfoldBin bin)
+
 
 -- | and use 'foldBin' to define a function 'binVal''  equivalent to 'binVal'.
 
 binVal' :: Bin -> Integer
-binVal' = foldBin (\ bin bit -> if bit == O then 2*bin  else 2*bin + 1) (\ bit -> if bit == O then 0 else 1) 
-
+binVal' = foldBin (\ bit bin -> if bit == O then 2*bin  else 2*bin + 1) 0
 
 -- | Test your function with HUnit.
 
@@ -84,22 +83,31 @@ binVal' = foldBin (\ bin bit -> if bit == O then 2*bin  else 2*bin + 1) (\ bit -
 
 -- | Define a function 'normalize' that given a binary numeral trims leading zeroes.
 -- | For example, normalize (B (B (MSB O) I) I) should return (B (MSB I) I).
--- Arreglar. No funciona.
 normalize :: Bin -> Bin
-normalize (MSB bit) = MSB bit
-normalize (B bin bit) = recnormalize bin
-    where 
-      recnormalize (MSB bit) = MSB bit
-      recnormalize (B bin bit) = if bit == O then recnormalize bin else B bin bit
+normalize (MSB bit) = (MSB bit)
+normalize (B (MSB O) bit) = (MSB bit)
+normalize (B bin bit) = (B (normalize bin) bit)
 
 -- | and use 'foldBin' to define a function 'normalize''  equivalent to 'normalize'.
 
 normalize' :: Bin -> Bin
-normalize' = undefined
+normalize' = foldBin simplify (MSB O)
+    where
+        simplify b (MSB O) = (MSB b)
+        simplify b bin = B bin b
+
+
 
 -- | Test your functions with HUnit.
 
--- todo
+testnormalize :: Test 
+testnormalize = test ["First Test" ~: B (B (MSB I) O) I ~=? normalize (B (B (B (B (MSB O) O) I) O) I), 
+                      "Second Test" ~: MSB O ~=? normalize (B (B (B (B (MSB O) O) O) O) O)]
+
+testnormalize' :: Test
+testnormalize' = test ["First Test" ~: B (B (MSB I) O) I ~=? normalize' (B (B (B (B (MSB O) O) I) O) I), 
+                       "Second Test" ~: MSB O ~=? normalize' (B (B (B (B (MSB O) O) O) O) O)] 
+
 
 -- |----------------------------------------------------------------------
 -- | Exercise 2 - Free variables of expressions
