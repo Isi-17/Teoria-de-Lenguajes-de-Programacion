@@ -277,46 +277,108 @@ foldAexp flit fvar fadd fmult fsub x = plegar x
 
 
 -- | Use 'foldAexp' to define the functions 'aVal'', 'fvAexp'', and 'substAexp''.
-
+-- Obtener el valor de una expresion aritmetica
 aVal' :: Aexp -> State -> Z
 aVal' exp s = foldAexp read s (+) (*) (-) exp
 
 -- aVal :: Aexp -> State -> Z
--- aVal (N n) _        =  numLit n
+-- aVal (N n) _        =  numLit n -- read :: Read a => String -> a
 -- aVal (V x) s        =  s x
 -- aVal (Add a1 a2) s  =  aVal a1 s + aVal a2 s
 -- aVal (Mult a1 a2) s =  aVal a1 s * aVal a2 s
 -- aVal (Sub a1 a2) s  =  aVal a1 s - aVal a2 s
 
+-- obtener las variables de una expresion aritmetica
+-- No se pueden repetir las variables
 fvAexp' :: Aexp -> [Var]
-fvAexp' = undefined
+fvAexp' exp = purgar (foldAexp (\n -> []) (\x -> [x]) (++) (++) (++) exp)
+      where purgar [] = []
+            purgar (x:xs) = if elem x xs   
+                              then purgar (xs)
+                              else x:(purgar xs)
 
+-- Si es N, no hay variables
+-- Si es V, hay una variable
+-- Si es Add, Mult, Sub, hay variables en a1 y a2
+
+-- Sustituir una variable por una expresion aritmetica
 substAexp' :: Aexp -> Subst -> Aexp
-substAexp' = undefined
+substAexp' exp (y :->: a0) = foldAexp N (\x -> if x == y then a0 else V x) Add Mult Sub exp
 
 -- | Test your functions with HUnit.
 
 testaVal' :: Test
 testaVal' = test ["FirstTest" ~: 2 ~=? aVal' (Add (N "1") (N "1")) (\y -> 0),
-                  "SecondTest" ~: 0 ~=? aVal' (Add (N "1") (N "1")) (\y -> 1),
+                  "SecondTest" ~: 0 ~=? aVal' (Add (N "1") (N "1")) (\y -> 1), -- 1 + 1 = 2 != 0
                   "ThirdTest" ~: 1 ~=? aVal' (Mult (N "1") (N "1")) (\y -> 1),
                   "FourthTest" ~: 0 ~=? aVal' (Sub (N "1") (N "1")) (\y -> 1)]
+
+testfvAexp' :: Test
+testfvAexp' = test ["FirstTest" ~: ["x"] ~=? fvAexp' (Add (V "x") (V "x")),
+                   "SecondTest" ~: ["x", "y"] ~=? fvAexp' (Add (V "x") (V "y")),
+                   "ThirdTest" ~: ["y", "x"] ~=? fvAexp' (Mult (Sub (V "x") (V "y")) (Add (V "y") (V "x")))]
+
+testsubstAexp' :: Test
+testsubstAexp' = test ["FirstTest" ~: (Add (V "x") (V "x")) ~=? substAexp' (Add (V "x") (V "y")) ("y" :->: (V "x")),
+                      "SecondTest" ~: (Add (V "x") (V "x")) ~=? substAexp' (Add (V "x") (V "x")) ("y" :->: (V "2")),
+                      "ThirdTest" ~: (Mult (V "3") (V "y")) ~=? substAexp' (Mult (V "x") (V "y")) ("x" :->: (V "3")),
+                      "FourthTest" ~: (Sub (V "y") (V "y")) ~=? substAexp' (Sub (V "x") (V "x")) ("x" :->: (V "y"))]
 
 -- | Define a function 'foldBexp' to fold a Boolean expression and use it
 -- | to define the functions 'bVal'', 'fvBexp'', and 'substAexp''.
 
-foldBexp :: untyped
-foldBexp = undefined
+foldBexp :: a -> a -> (Aexp -> Aexp -> a) -> (Aexp -> Aexp -> a) -> (a -> a) -> (a -> a -> a) -> Bexp -> a
+foldBexp fT fF fEqu fLeg fNeg fAnd x = plegar x
+      where 
+        plegar TRUE = fT
+        plegar FALSE = fF
+        plegar (Equ a1 a2) = fEqu a1 a2
+        plegar (Leq a1 a2) = fLeg a1 a2
+        plegar (Neg b) = fNeg (plegar b)
+        plegar (And b1 b2) = fAnd (plegar b1) (plegar b2)
 
+-- | Test your functions with HUnit.
+-- bVal obtiene el valor de una expresion booleana
 bVal' :: Bexp -> State -> Bool
-bVal' = undefined
+bVal' exp s = foldBexp True False (\a1 a2 -> aVal' a1 s == aVal' a2 s) (\a1 a2 -> aVal' a1 s <= aVal' a2 s) (not) (&&) exp
 
+-- fvBexp obtiene las variables de una expresion booleana
 fvBexp' :: Bexp -> [Var]
-fvBexp' = undefined
+fvBexp' exp = purgar (foldBexp [] [] (\a1 a2 -> fvAexp' a1 ++ fvAexp' a2) (\a1 a2 -> fvAexp' a1 ++ fvAexp' a2) id (++) exp)
+      where purgar [] = []
+            purgar (x:xs) = if elem x xs   
+                              then purgar (xs)
+                              else x:(purgar xs)
 
+-- substBexp sustituye una variable por una expresion aritmetica
 substBexp' :: Bexp -> Subst -> Bexp
-substBexp' = undefined
+substBexp' exp sus = foldBexp TRUE FALSE subEsq subLeq (Neg) (And) exp
+      where subEsq a1 a2 = Equ (substAexp' a1 sus) (substAexp' a2 sus)
+            subLeq a1 a2 = Leq (substAexp' a1 sus) (substAexp' a2 sus)
 
 -- | Test your functions with HUnit.
 
--- todo
+testbVal' :: Test
+testbVal' = test ["FirstTest" ~: True ~=? bVal' (Equ (N "1") (N "1")) (\y -> 0),
+                  "SecondTest" ~: False ~=? bVal' (Equ (N "1") (N "1")) (\y -> 1), -- 1 == 1 = True != False
+                  "ThirdTest" ~: True ~=? bVal' (Leq (N "1") (N "1")) (\y -> 1),
+                  "FourthTest" ~: False ~=? bVal' (Leq (N "1") (N "1")) (\y -> 0),
+                  "FifthTest" ~: True ~=? bVal' (Neg (Equ (N "1") (N "1"))) (\y -> 0),
+                  "SixthTest" ~: False ~=? bVal' (Neg (Equ (N "1") (N "1"))) (\y -> 1),
+                  "SeventhTest" ~: True ~=? bVal' (And (Equ (N "1") (N "1")) (Leq (N "1") (N "1"))) (\y -> 1),
+                  "EighthTest" ~: False ~=? bVal' (And (Equ (N "1") (N "1")) (Leq (N "1") (N "1"))) (\y -> 0)]
+
+testfvBexp' :: Test
+testfvBexp' = test ["FirstTest" ~: ["x"] ~=? fvBexp' (Equ (V "x") (V "x")),
+                   "SecondTest" ~: ["x", "y"] ~=? fvBexp' (Leq (V "x") (V "y")),
+                   "ThirdTest" ~: ["y", "x"] ~=? fvBexp' (Leq  (Sub (V "x") (V "y")) (Add (V "y") (V "x"))),
+                   "FourthTest" ~: ["y"] ~=? fvBexp' (Neg (Equ (V "y") (V "y"))),
+                   "FifthTest" ~: ["x"] ~=? fvBexp' (And (Equ (V "x") (V "x")) (Leq (V "x") (V "x")))]
+
+testsubstBexp' :: Test
+testsubstBexp' = test ["FirstTest" ~: (Equ (V "x") (V "x")) ~=? substBexp' (Equ (V "x") (V "y")) ("y" :->: (V "x")),
+                      "SecondTest" ~: (Equ (V "x") (V "x")) ~=? substBexp' (Equ (V "x") (V "x")) ("y" :->: (V "2")),
+                      "ThirdTest" ~: (Leq (V "3") (V "y")) ~=? substBexp' (Leq (V "x") (V "y")) ("x" :->: (V "3")),
+                      "FourthTest" ~: (Neg (Equ (V "y") (V "y"))) ~=? substBexp' (Neg (Equ (V "x") (V "x"))) ("x" :->: (V "y")),
+                      "FifthTest" ~: (And (Equ (V "x") (V "x")) (Leq (V "x") (V "x"))) ~=? substBexp' (And (Equ (V "x") (V "y")) (Leq (V "x") (V "y"))) ("y" :->: (V "x"))]
+
