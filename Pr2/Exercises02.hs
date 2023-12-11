@@ -218,6 +218,42 @@ nsAexp (InterAExp (Mult a1 a2) s) = FinalAExp (z1 * z2)
     FinalAExp z1 = nsAexp (InterAExp a1 s)
     FinalAExp z2 = nsAexp (InterAExp a2 s)
 
+
+
+-- | Define the semantics of arithmetic expressions (Bexp) by means of
+-- | natural semantics. To that end, define an algebraic datatype 'ConfigBexp'
+-- | to represent the configurations, and a function 'nsBexp' to represent
+-- | the evaluation judgement.
+
+-- representation of configurations for Bexp
+
+data ConfigBExp = InterBExp Bexp State  -- <b, s>
+                | FinalBExp Bool        -- b
+                -- deriving(Eq, Show)
+
+-- representation of the evaluation judgement <b, s> -> z
+
+nsBexp :: ConfigBExp -> ConfigBExp
+nsBexp (InterBExp TRUE _) = FinalBExp True
+nsBexp (InterBExp FALSE _) = FinalBExp False
+nsBexp (InterBExp (Equ a1 a2) s) = FinalBExp (z1 == z2)
+  where
+    FinalAExp z1 = nsAexp (InterAExp a1 s)
+    FinalAExp z2 = nsAexp (InterAExp a2 s)
+nsBexp (InterBExp (Leq a1 a2) s) = FinalBExp (z1 <= z2)
+  where
+    FinalAExp z1 = nsAexp (InterAExp a1 s)
+    FinalAExp z2 = nsAexp (InterAExp a2 s)
+nsBexp (InterBExp (Neg b) s) = FinalBExp (not b')
+  where
+    FinalBExp b' = nsBexp (InterBExp b s)
+nsBexp (InterBExp (And b1 b2) s) = FinalBExp (b1' && b2')
+  where
+    FinalBExp b1' = nsBexp (InterBExp b1 s)
+    FinalBExp b2' = nsBexp (InterBExp b2 s)
+
+
+
 -- | Test your function with HUnit. Inspect the final values of at least
 -- | four different evaluations.
 -- testnsAexp :: Test
