@@ -234,6 +234,7 @@ data ConfigBExp = InterBExp Bexp State  -- <b, s>
 -- representation of the evaluation judgement <b, s> -> z
 
 nsBexp :: ConfigBExp -> ConfigBExp
+nsBexp (FinalBExp b) = FinalBExp b
 nsBexp (InterBExp TRUE _) = FinalBExp True
 nsBexp (InterBExp FALSE _) = FinalBExp False
 nsBexp (InterBExp (Equ a1 a2) s) = FinalBExp (z1 == z2)
@@ -401,6 +402,11 @@ data DerivTree = AssNS     Transition
                | IfFFNS    Transition DerivTree
                | WhileTTNS Transition DerivTree DerivTree
                | WhileFFNS Transition
+               | RepeatTTNS Transition
+               | RepeatFFNS Transition DerivTree DerivTree
+               | ForTTNS    Transition DerivTree DerivTree DerivTree
+               | ForFFNS    Transition
+               
 
 -- | and the function 'getFinalState' to access the final state of the root
 -- | of a derivation tree:
@@ -413,6 +419,10 @@ getFinalState (IfTTNS (_ :-->: s) _ )      = s
 getFinalState (IfFFNS (_ :-->: s) _ )      = s
 getFinalState (WhileTTNS (_ :-->: s) _ _ ) = s
 getFinalState (WhileFFNS (_ :-->: s))      = s
+getFinalState (RepeatTTNS (_ :-->: s))     = s
+getFinalState (RepeatFFNS (_ :-->: s) _ _ ) = s
+getFinalState (ForTTNS (_ :-->: s) _ _ _)  = s
+getFinalState (ForFFNS (_ :-->: s))        = s
 
 
 -- | Define a function 'nsDeriv' that given a WHILE statement 'st' and an
@@ -438,6 +448,15 @@ nsDeriv (While b ss) s
   | otherwise = WhileFFNS ((Inter (While b ss) s) :-->: s)
   where 
     Final s' = nsStm (Inter ss s) 
-
-
+nsDeriv (Repeat ss b) s
+  | bVal b s == False = RepeatFFNS ((Inter (Repeat ss b) s) :-->: s') (nsDeriv ss s) (nsDeriv (Repeat ss b) s')
+  | otherwise = RepeatTTNS ((Inter (Repeat ss b) s) :-->: s)
+  where 
+    Final s' = nsStm (Inter ss s)
+nsDeriv (For x a1 a2 ss) s
+  | bVal (Leq a1 a2) s == True = ForTTNS ((Inter (For x a1 a2 ss) s) :-->: s'') (nsDeriv (Ass x a1) s) (nsDeriv ss s') (nsDeriv (For x a1 a2 ss) s'')
+  | otherwise = ForFFNS ((Inter (For x a1 a2 ss) s) :-->: s)
+  where 
+    Final s' = nsStm (Inter (Ass x a1) s)
+    Final s'' = nsStm (Inter ss s')
 
