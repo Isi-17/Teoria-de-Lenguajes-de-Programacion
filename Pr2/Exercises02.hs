@@ -454,11 +454,12 @@ nsDeriv (Repeat ss b) s
   where 
     Final s' = nsStm (Inter ss s)
 nsDeriv (For x a1 a2 ss) s
-  | bVal (Leq a1 a2) s == True = ForTTNS ((Inter (For x a1 a2 ss) s) :-->: s'') (nsDeriv (Ass x a1) s) (nsDeriv ss s') (nsDeriv (For x (Add v1 (N "1")) v2 ss) s'')
+  | bVal (Leq a1 a2) s == True = ForTTNS ((Inter (For x a1 a2 ss) s) :-->: s''') (nsDeriv (Ass x a1) s) (nsDeriv ss s') (nsDeriv (For x (Add v1 (N "1")) v2 ss) s'')
   | otherwise = ForFFNS ((Inter (For x a1 a2 ss) s) :-->: s)
   where 
     Final s' = nsStm (Inter (Ass x a1) s)
     Final s'' = nsStm (Inter ss s')
+    Final s''' = nsStm (Inter (For x (Add v1 (N "1")) v2 ss) s'')
     v1 = N (show (aVal a1 s))
     v2 = N (show (aVal a2 s))
 
