@@ -5,7 +5,7 @@ Fall 2023
 
 Implementation of the Structural Operational Semantics of the WHILE Language
 
-Author:
+Author: Isidro
 
 -}
 
@@ -35,7 +35,17 @@ type DerivSeq = [Config]
 -- | initial state 's' returns the corresponding derivation sequence:
 
 derivSeq :: Stm -> State -> DerivSeq
-derivSeq = undefined
+derivSeq ss s
+  | isFinal next = [Inter ss s] ++ [Final s']
+  where 
+    next = sosStm (Inter ss s)
+    Final s' = next
+
+derivSeq ss s
+  | isInter next = [Inter ss s] ++ derivSeq ss' s'
+  where 
+    next = sosStm (Inter ss s)
+    Inter ss' s' = next
 
 -- | The function 'showDerivSeq' returns a String representation  of
 -- | a derivation sequence 'dseq'. The 'vars' argument is a list of variables
@@ -88,12 +98,14 @@ sSos ss s = s'
 
 {- Formal definition of 'repeat S until b'
 
+    [repeat]   --------------------------------------------------------------------------
+                <repeat S until b, s> => <S; if b then skip else (repeat S until b), s>
+
 -}
 
 -- | Exercise 2.2
 -- | Modify the definition of 'sosStm' in 'StructuralSemantics.hs' to deal
 -- | with the 'repeat until' statement.
-
 
 
 -- | Exercise 2.3
@@ -111,6 +123,12 @@ sSos ss s = s'
 -- | are not allowed to rely on the 'while b do s' statement.
 
 {- Formal definition of 'for x:= a1 to a2'
+
+  [for]  -------------------------------------------------------------------------------------------------
+          <for x:=a1 to a2 do S, s> => <x:=a1; if (a1<=a2) then (S; for x:=v1+1 to v2 do S) else skip, s>
+
+     v1 = N-1(A[a1]s)
+     v2 = N-1(A[a2]s)
 
 -}
 
@@ -141,7 +159,23 @@ sSos ss s = s'
 -- | that it deals with stuck configurations.
 
 derivSeqAbort :: Stm -> State -> DerivSeq
-derivSeqAbort = undefined
+derivSeqAbort ss s
+  | isFinal next = [Inter ss s] ++ [Final s']
+    where
+      next = sosStm (Inter ss s)
+      Final s' = next
+
+derivSeqAbort ss s
+  | isInter next = [Inter ss s] ++ (derivSeqAbort ss' s')
+    where
+      next = sosStm (Inter ss s)
+      Inter ss' s' = next
+
+derivSeqAbort ss s
+  | isStuck next = [Inter ss s] ++ [Stuck ss' s']
+    where
+      next = sosStm (Inter ss s)
+      Stuck ss' s' = next
 
 -- | Use the function 'runAbort' below to execute the WHILE programs 'Aborti.w'
 -- | in the directory 'Examples' to check your implementation of the Structural
@@ -213,7 +247,39 @@ data AexpConfig = Redex Aexp State  -- a redex is a reducible expression
 
 sosAexp :: AexpConfig -> AexpConfig
 
-sosAexp = undefined
+sosAexp (Redex (N n) s) = Value (read n)
+
+sosAexp (Redex (V x) s) = Redex (N (show (s x))) s
+
+-- add
+sosAexp (Redex (Add (N n1) (N n2)) s) = Redex (N n3) s
+  where n3 = show (read n1 + read n2)
+
+sosAexp (Redex (Add (N n1) a2) s) = Redex (Add (N n1) a2') s
+  where Redex a2' s = sosAexp (Redex a2 s)
+
+sosAexp (Redex (Add a1 a2) s) = Redex (Add a1' a2) s
+  where Redex a1' s = sosAexp (Redex a1 s)
+
+-- sub
+sosAexp (Redex (Sub (N n1) (N n2)) s) = Redex (N n3) s
+  where n3 = show (read n1 - read n2)
+
+sosAexp (Redex (Sub (N n1) a2) s) = Redex (Sub (N n1) a2') s
+  where Redex a2' s = sosAexp (Redex a2 s)
+
+sosAexp (Redex (Sub a1 a2) s) = Redex (Sub a1' a2) s
+  where Redex a1' s = sosAexp (Redex a1 s)
+
+-- mult
+sosAexp (Redex (Mult (N n1) (N n2)) s) = Redex (N n3) s
+  where n3 = show (read n1 * read n2)
+
+sosAexp (Redex (Mult (N n1) a2) s) = Redex (Mult (N n1) a2') s
+  where Redex a2' s = sosAexp (Redex a2 s)
+
+sosAexp (Redex (Mult a1 a2) s) = Redex (Mult a1' a2) s
+  where Redex a1' s = sosAexp (Redex a1 s)
 
 -- |----------------------------------------------------------------------
 -- | Exercise 5.2
@@ -222,13 +288,31 @@ sosAexp = undefined
 -- | Given the type synonym 'AexpDerivSeq' to represent derivation sequences
 -- | of the structural operational semantics for arithmetic expressions 'Aexp':
 
+isRedex :: AexpConfig -> Bool
+isRedex (Redex _ _) = True
+isRedex _ = False
+
+isValue :: AexpConfig -> Bool
+isValue (Value _) = True
+isValue _ = False
+
 type AexpDerivSeq = [AexpConfig]
 
 -- | Define a function 'aExpDerivSeq' that given a 'Aexp' expression 'a' and an
 -- | initial state 's' returns the corresponding derivation sequence:
 
 aExpDerivSeq :: Aexp -> State -> AexpDerivSeq
-aExpDerivSeq = undefined
+aExpDerivSeq a s
+  | isValue next = [Redex a s] ++ [Value n]
+    where
+      next = sosAexp (Redex a s)
+      Value n = next
+
+aExpDerivSeq exp s
+  | isRedex next = [Redex exp s] ++ (aExpDerivSeq exp' s')
+    where
+      next = sosAexp (Redex exp s)
+      Redex exp' s' = next
 
 -- | To test your code, you can use the function 'showAexpDerivSeq' that
 -- | returns a String representation  of a derivation sequence 'dseq':
