@@ -73,11 +73,11 @@ nsStm (Inter (While b ss) s)
 
 -- repeat S until b
 -- (Repeat Stm Bexp)
---B[b] s = ff
+--B[b] s = tt
 nsStm (Inter (Repeat ss b) s)
   | bVal b s == True = nsStm (Inter ss s)
 
---B[b] s = tt
+--B[b] s = ff
 nsStm (Inter (Repeat ss b) s)
   | bVal b s == False = Final s''
     where 
