@@ -224,7 +224,8 @@ nsStm envV envP (Inter (Call p) sto) = Final sto'
 nsStm envV envP (Inter (Call p) sto) = Final sto'
   where
     (ss, envV', envP') = envProc envP p
-    Final sto' = nsStm envV' (updP (Proc p ss EndProc) envV' envP') (Inter ss sto)
+    envP'' = updP (Proc p ss EndProc) envV' envP'
+    Final sto' = nsStm envV' envP'' (Inter ss sto)
 
 
 -- semantic function for Natural Semantics
