@@ -80,19 +80,24 @@ nsStm (Inter (If b ss1 ss2) s)
 
   Regla 1: Si encontramos una etiqueta n_ij cuyo valor coincida con el de a, se ejecuta la sentencia S_i correspondiente y se ignora el resto de casos.
 
-                  < case a of n_ij : s_i, s > -> s_i' 
-  [Case1NS] ---------------------------------------------- 
-                < case a of ls, s > -> s_i'
+                          <S, s> -> s'
+  [Case1NStt]  ------------------------------------    if LC = (LL : S LC') and (A[a]s isElem lista) = tt
+                     <case a of LC end, s> -> s'
+
+                       <case a of LC' end, s> -> s'
+  [Case1NSff]  -----------------------------------------  if LC = (LL : S LC') and (A[a]s isElem lista) = ff
+                       <case a of LC end, s> -> s'
 
     Regla 2:  Si ninguna etiqueta n_ij coincide con el valor de a y al final aparece un caso default, se ejecuta la sentencia S_d
-.                   
-  [Case2NS] ---------------------------------------------- 
-                < case a of ls, s > -> s_d
+    
+                          < S, s> -> s_d
+  [Case2NS] ---------------------------------------- if LC = default:S
+                     < case a of ls, s > -> s_d
 
     Regla 3:  Si ninguna etiqueta n_ij coincide con el valor de a y no aparece un caso default, se aborta la ejecución del programa.
 
-  [Case3NS] ----------------------------------------------
-                < case a of ls, s > -> error
+  [Case3NS] -------------------------------------- if LC = End
+                <case a of LC end, s> -> error
 
 -}
 
@@ -104,8 +109,9 @@ nsStm (Inter (If b ss1 ss2) s)
 
 -- Regla 1:
 nsStm (Inter (Case aexp (LabelledStm labels stm rest)) s)
-  | evalAexpList aexp labels s = nsStm (Inter stm s) -- Si la expresión aritmética coincide con alguna de las etiquetas, se ejecuta la sentencia Si correspondiente
+  | elem (aVal aexp s) labels = nsStm (Inter stm s) -- Si la expresión aritmética coincide con alguna de las etiquetas, se ejecuta la sentencia Si correspondiente
   | otherwise = nsStm (Inter (Case aexp rest) s) -- Si no coincide, se ignora el resto de casos
+-- | evalAexpList aexp labels s = nsStm (Inter stm s) 
 
 -- Regla 2:
 nsStm (Inter (Case aexp (Default stm)) s) = nsStm (Inter stm s)
@@ -114,9 +120,9 @@ nsStm (Inter (Case aexp (Default stm)) s) = nsStm (Inter stm s)
 nsStm (Inter (Case aexp EndLabelledStms) s) = error "No se encontró coincidencia y no hay caso default."
 
 -- Función para evaluar si la expresión aritmética coincide con alguna de las etiquetas
-evalAexpList :: Aexp -> [Integer] -> State -> Bool
-evalAexpList aexp [] s = False
-evalAexpList aexp (n:ns) s = (aVal aexp s) == n || evalAexpList aexp ns s
+-- evalAexpList :: Aexp -> [Integer] -> State -> Bool
+-- evalAexpList aexp [] s = False
+-- evalAexpList aexp (n:ns) s = (aVal aexp s) == n || evalAexpList aexp ns s
 
 ----------------------------------------------------------------------
 -- NO MODIFICAR EL CODIGO DE ABAJO
