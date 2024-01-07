@@ -101,16 +101,23 @@ sosStm (Inter (If b ss1 ss2) s)
     Completa la definición semántica de la sentencia case.
 
     Regla 1: Si encontramos una etiqueta n_ij cuyo valor coincida con el de a, se ejecuta la sentencia S_i correspondiente y se ignora el resto de casos.
-   
-              [case1SOS] < case a of n_ij : s_i, s > => s_i'
+                         
+             [Case1SOStt]  ---------------------------------    if LC = (LL : S LC') and (A[a]s isElem lista) = tt
+                              <case a of LC end, s> => <S, s>
+
+                
+             [Case1SOSff]  -------------------------------------------------   if LC = (LL : S LC') and (A[a]s isElem lista) = ff
+                             <case a of LC end, s> => <case a of LC' end, s>
 
     Regla 2:  Si ninguna etiqueta n_ij coincide con el valor de a y al final aparece un caso default, se ejecuta la sentencia S_d
-.                   
-              [case2SOS] < case a of ls, s > => s_d
+                   
+              [Case2SOS] ---------------------------------------- if LC = default:S
+                              < case a of LC end, s > => s_d
 
     Regla 3:  Si ninguna etiqueta n_ij coincide con el valor de a y no aparece un caso default, se aborta la ejecución del programa.
 
-              [case3SOS] < case a of ls, s > => < abort, s >
+              [Case3SOS] ------------------------------------------- if LC = End
+                            < case a of LC end, s > => < abort, s > 
 
 -}
 
@@ -124,9 +131,9 @@ sosStm (Inter Abort s) = Stuck Abort s
 
 -- Regla 1: 
 sosStm (Inter (Case aexp (LabelledStm labels stm rest)) s)
-  | evalAexpList aexp labels s = Inter stm s
+  | elem (aVal aexp s) labels = Inter stm s
   | otherwise = sosStm (Inter (Case aexp rest) s) -- Si no coincide, se ignora el resto de casos
-
+  -- | evalAexpList aexp labels s = Inter stm s
 -- Regla 2: 
 sosStm (Inter (Case aexp (Default stm)) s) = Inter stm s
 
@@ -134,9 +141,9 @@ sosStm (Inter (Case aexp (Default stm)) s) = Inter stm s
 sosStm (Inter (Case aexp EndLabelledStms) s) = Inter Abort s
 
 -- Función auxiliar para evaluar si la expresión aritmética coincide con alguna de las etiquetas
-evalAexpList :: Aexp -> [Integer] -> State -> Bool
-evalAexpList aexp [] s = False
-evalAexpList aexp (n:ns) s = (aVal aexp s) == n || evalAexpList aexp ns s
+-- evalAexpList :: Aexp -> [Integer] -> State -> Bool
+-- evalAexpList aexp [] s = False
+-- evalAexpList aexp (n:ns) s = (aVal aexp s) == n || evalAexpList aexp ns s
 
 
 ----------------------------------------------------------------------
