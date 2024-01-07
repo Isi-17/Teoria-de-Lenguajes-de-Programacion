@@ -125,17 +125,15 @@ sosAexp (Redex (Div (N n1) (N n2)) s)
   | otherwise = Redex (N n3) s
     where n3 = show (read n1 `div` read n2)
 
-sosAexp (Redex (Div (N n1) a2) s)
-  | aVal a2' s == 0 = Stuck (Div (N n1) a2') s
-  | otherwise = Redex (Div (N n1) a2') s    
+sosAexp (Redex (Div (N n1) a2) s) = Redex (Div (N n1) a2') s    
     where
       Redex a2' s = sosAexp (Redex a2 s)
+--  | aVal a2' s == 0 = Stuck (Div (N n1) a2') s
 
-sosAexp (Redex (Div a1 a2) s)
-  | aVal a2 s == 0 = Stuck (Div a1 a2) s
-  | otherwise = Redex (Div a1' a2) s
+sosAexp (Redex (Div a1 a2) s) = Redex (Div a1' a2) s
     where
       Redex a1' s = sosAexp (Redex a1 s)
+--  | aVal a2 s == 0 = Stuck (Div a1 a2) s
 
 -- |----------------------------------------------------------------------
 -- | Exercise 1.c
