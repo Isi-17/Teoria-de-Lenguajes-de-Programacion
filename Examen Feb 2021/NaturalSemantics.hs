@@ -82,22 +82,22 @@ nsStm (Inter (If b ss1 ss2) s)
 
                           <S, s> -> s'
   [Case1NStt]  ------------------------------------    if LC = (LL : S LC') and (A[a]s isElem lista) = tt
-                     <case a of LC end, s> -> s'
+                     <Case a of LC end, s> -> s'
 
                        <case a of LC' end, s> -> s'
   [Case1NSff]  -----------------------------------------  if LC = (LL : S LC') and (A[a]s isElem lista) = ff
-                       <case a of LC end, s> -> s'
+                       <Case a of LC end, s> -> s'
 
     Regla 2:  Si ninguna etiqueta n_ij coincide con el valor de a y al final aparece un caso default, se ejecuta la sentencia S_d
     
                           < S, s> -> s_d
   [Case2NS] ---------------------------------------- if LC = default:S
-                     < case a of ls, s > -> s_d
+                     < Case a of LC, s > -> s_d
 
     Regla 3:  Si ninguna etiqueta n_ij coincide con el valor de a y no aparece un caso default, se aborta la ejecución del programa.
 
   [Case3NS] -------------------------------------- if LC = End
-                <case a of LC end, s> -> error
+                <Case a of LC end, s> -> error
 
 -}
 
