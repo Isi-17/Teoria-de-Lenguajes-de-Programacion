@@ -43,6 +43,10 @@ isStuck :: Config -> Bool
 isStuck (Stuck _ _) = True
 isStuck _           = False
 
+update :: State -> Var -> Z -> State
+update s y v x = if y == x then v else s x
+
+
 -- representation of the transition relation <S, s> -> s'
 
 sosStm :: Config -> Config
@@ -50,8 +54,6 @@ sosStm :: Config -> Config
 -- x := a
 
 sosStm (Inter (Ass x a) s) = Final (update s x (aVal a s))
-  where
-    update s x v y = if x == y then v else s y
 
 -- skip
 
