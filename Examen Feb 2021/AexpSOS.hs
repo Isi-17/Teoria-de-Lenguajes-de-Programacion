@@ -156,6 +156,10 @@ isValue :: AexpConfig -> Bool
 isValue (Value _) = True
 isValue _ = False
 
+isStuck :: AexpConfig -> Bool
+isStuck (Stuck _ _) = True
+isStuck _ = False
+
 aExpDerivSeq :: Aexp -> State -> AexpDerivSeq
 aExpDerivSeq a s
   | isValue next = [Redex a s] ++ [Value n]
@@ -168,6 +172,12 @@ aExpDerivSeq exp s
     where
       next = sosAexp (Redex exp s)
       Redex exp' s' = next
+
+aExpDerivSeq exp s
+  | isStuck next = [Redex exp s] ++ [Stuck exp' s']
+    where
+      next = sosAexp (Redex exp s)
+      Stuck exp' s' = next
 
 ----------------------------------------------------------------------
 -- NO MODIFICAR EL CODIGO DE ABAJO
