@@ -24,7 +24,7 @@ import           While21
 import           While21Parser
 
 updateState :: State -> Var -> Z -> State
-updateState s x v y = if x == y then v else s y
+updateState s y v x = if y == x then v else s x
 
 -- representation of configurations for While
 
