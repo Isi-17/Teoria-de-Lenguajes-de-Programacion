@@ -93,18 +93,16 @@ new l = l + 1
 -- | Exercise 1.1 - update envV and sto
 
 -- update a variable environment with a new binding envV [x -> l]
-updateV :: EnvVar -> Var -> Loc -> EnvVar
-updateV envV x l = envV'
-  where
-    envV' y | x == y    = l
-            | otherwise = envV y
+updateV ::  EnvVar -> Var -> Loc -> EnvVar
+updateV envV x l y
+    | x == y    = l
+    | otherwise = envV y
 
 -- update a store with a new binding sto [l -> v]
 updateS :: Store -> Loc -> Z -> Store
-updateS sto l v = sto'
-  where
-    sto' l' | l == l'   = v
-            | otherwise = sto l'
+updateS sto l v l'
+    | l == l'   = v
+    | otherwise = sto l'
 
 -- | Exercise 1.2 - natural semantics for variable declarations
 
