@@ -109,12 +109,17 @@ nsStm (Inter (If b ss1 ss2) s)
 
 -- Regla 1:
 nsStm (Inter (Case aexp (LabelledStm labels stm rest)) s)
-  | elem (aVal aexp s) labels = nsStm (Inter stm s) -- Si la expresión aritmética coincide con alguna de las etiquetas, se ejecuta la sentencia Si correspondiente
-  | otherwise = nsStm (Inter (Case aexp rest) s) -- Si no coincide, se ignora el resto de casos
+  | elem (aVal aexp s) labels = Final s1 -- Si la expresión aritmética coincide con alguna de las etiquetas, se ejecuta la sentencia Si correspondiente
+  | otherwise = Final s2 -- Si no coincide, se ignora el resto de casos
+     where 
+        Final s1 = nsStm (Inter stm s)
+        Final s2 = nsStm (Inter (Case aexp rest) s)
 -- | evalAexpList aexp labels s = nsStm (Inter stm s) 
 
 -- Regla 2:
-nsStm (Inter (Case aexp (Default stm)) s) = nsStm (Inter stm s)
+nsStm (Inter (Case aexp (Default stm)) s) = Final s1
+  where
+     Final s1 = nsStm (Inter stm s)
 
 -- Regla 3:
 nsStm (Inter (Case aexp EndLabelledStms) s) = error "No se encontró coincidencia y no hay caso default."
