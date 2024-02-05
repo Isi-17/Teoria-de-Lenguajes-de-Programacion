@@ -79,7 +79,9 @@ nsStm (Inter (While b ss) s)
 -- (Repeat Stm Bexp)
 --B[b] s = tt
 nsStm (Inter (Repeat ss b) s)
-  | bVal b s == True = nsStm (Inter ss s)
+  | bVal b s == True = Final s'
+    where 
+       Final s' = nsStm (Inter ss s)
 
 --B[b] s = ff
 nsStm (Inter (Repeat ss b) s)
