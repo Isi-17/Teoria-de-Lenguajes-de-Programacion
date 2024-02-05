@@ -52,11 +52,15 @@ nsStm (Inter (Comp ss1 ss2) s) = Final s''
 
 -- B[b]s = tt
 nsStm (Inter (If b ss1 ss2) s)
-  | bVal b s == True = nsStm (Inter ss1 s)
+  | bVal b s == True = Final s'
+  where
+    Final s' = nsStm (Inter ss1 s)
 
 -- B[b]s = ff
 nsStm (Inter (If b ss1 ss2) s)
-  | bVal b s == False = nsStm (Inter ss2 s)
+  | bVal b s == False = Final s'
+  where
+    Final s' = nsStm (Inter ss2 s)
 
 -- while b do s
 
