@@ -463,3 +463,8 @@ nsDeriv (For x a1 a2 ss) s
     v1 = N (show (aVal a1 s))
     v2 = N (show (aVal a2 s))
 
+-- | Define random in NaturalSemantics
+--  Idea:                                  
+--             < S1, x> -> 0                                < S2, x> -> x+1
+--        ------------------------------              ------------------------------
+--          < random(x), s> ->  0                       < random(x), s> ->  <random(x+1), s>
