@@ -134,7 +134,7 @@ sosStm (Inter Abort s) = Stuck Abort s
 -- Regla 1: 
 sosStm (Inter (Case aexp (LabelledStm labels stm rest)) s)
   | elem (aVal aexp s) labels = Inter stm s
-  | otherwise = sosStm (Inter (Case aexp rest) s) -- Si no coincide, se ignora el resto de casos
+  | otherwise = Inter (Case aexp rest) s -- Si no coincide, se ignora el resto de casos
   -- | evalAexpList aexp labels s = Inter stm s
 -- Regla 2: 
 sosStm (Inter (Case aexp (Default stm)) s) = Inter stm s
