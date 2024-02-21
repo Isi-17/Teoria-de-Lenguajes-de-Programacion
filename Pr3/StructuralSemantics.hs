@@ -96,3 +96,18 @@ sosStm (Inter (For x a1 a2 ss) s) = Inter (If (Leq a1 a2) (Comp (Ass x a1) (For 
 -- abort
 
 sosStm (Inter Abort s) = Stuck Abort s
+
+-- Define assert in StructuralSemantics
+--
+--            -------------------------------------------------------
+--             <assert b before S, s> => <if b then S else abort, s>
+--
+-- sosStm (Inter (Assert b S) s) = Inter (If b S Skip) s
+--
+-- Si no tenemos definido abort:
+--
+--            -----------------------------------------------------
+--             <assert b before S, s> => <if b then S else skip, s> 
+--
+-- sosStm (Inter (Assert b S) s) = Inter (If b S Abort) s
+
