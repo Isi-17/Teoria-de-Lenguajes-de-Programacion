@@ -55,7 +55,7 @@ sosStm (Inter Skip s) = Final s
 -- s1; s2
 ---- comp1
 sosStm (Inter (Comp ss1 ss2) s)
-    | isInter next = sosStm (Inter (Comp ss1' ss2) s')
+    | isInter next = Inter (Comp ss1' ss2) s'
     where 
         next = sosStm (Inter ss1 s)
         Inter ss1' s' = next
